@@ -1,3 +1,8 @@
 <Solution>
-  <Project Path="InterviewPlatform.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/InterviewPlatform/InterviewPlatform.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InterviewPlatform.Tests/InterviewPlatform.Tests.csproj" />
+  </Folder>
 </Solution>

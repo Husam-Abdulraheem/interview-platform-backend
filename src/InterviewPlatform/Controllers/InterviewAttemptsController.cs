@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using InterviewPlatform.Application.DTOs;
 using InterviewPlatform.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,7 @@ namespace InterviewPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Trainee")]
+[Authorize]
 public class InterviewAttemptsController : ControllerBase
 {
     private readonly IInterviewAttemptService _attemptService;
@@ -18,59 +17,35 @@ public class InterviewAttemptsController : ControllerBase
         _attemptService = attemptService;
     }
 
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
-
     [HttpPost("start")]
-    public async Task<IActionResult> StartAttempt([FromQuery] Guid interviewId)
+    [Authorize(Roles = "Trainee")]
+    public async Task<IActionResult> StartAttempt([FromQuery] Guid traineeId, [FromQuery] Guid interviewId)
     {
-        var traineeId = GetUserId();
-        if (traineeId == Guid.Empty) return Unauthorized();
-
         var attempt = await _attemptService.StartAttemptAsync(traineeId, interviewId);
         return Ok(attempt);
     }
 
     [HttpPost("submit-answer")]
+    [Authorize(Roles = "Trainee")]
     public async Task<IActionResult> SubmitAnswer([FromBody] SubmitAnswerDto dto)
     {
-        try
-        {
-            var answer = await _attemptService.SubmitAnswerAsync(dto);
-            return Ok(answer);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var result = await _attemptService.SubmitAnswerAsync(dto);
+        return Ok(result);
     }
 
-    [HttpPost("{attemptId:guid}/complete")]
-    public async Task<IActionResult> CompleteAttempt(Guid attemptId)
+    [HttpPost("{id}/complete")]
+    [Authorize(Roles = "Trainee")]
+    public async Task<IActionResult> CompleteAttempt(Guid id)
     {
-        try
-        {
-            var result = await _attemptService.CompleteAttemptAsync(attemptId);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    [HttpGet("{attemptId:guid}")]
-    public async Task<IActionResult> GetAttemptDetails(Guid attemptId)
-    {
-        var attempt = await _attemptService.GetAttemptDetailsAsync(attemptId);
-        if (attempt == null) return NotFound();
-
-        // Enforce that a user can only view their own attempts
-        if (attempt.TraineeId != GetUserId()) return Forbid();
-
+        var attempt = await _attemptService.CompleteAttemptAsync(id);
         return Ok(attempt);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetAttemptDetails(Guid id)
+    {
+        var details = await _attemptService.GetAttemptDetailsAsync(id);
+        if (details == null) return NotFound();
+        return Ok(details);
     }
 }

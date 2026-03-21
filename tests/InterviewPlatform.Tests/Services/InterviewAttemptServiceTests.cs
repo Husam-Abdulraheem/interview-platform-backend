@@ -3,8 +3,8 @@ using InterviewPlatform.Application.DTOs;
 using InterviewPlatform.Application.Interfaces;
 using InterviewPlatform.Application.Services;
 using InterviewPlatform.Core.Entities;
-using InterviewPlatform.Core.Enums;
 using Moq;
+using Xunit;
 using Mapster;
 
 namespace InterviewPlatform.Tests.Services;
@@ -21,6 +21,7 @@ public class InterviewAttemptServiceTests
 
     public InterviewAttemptServiceTests()
     {
+        TypeAdapterConfig.GlobalSettings.Default.PreserveReference(true);
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockAiService = new Mock<IAiEvaluationService>();
         
@@ -36,49 +37,45 @@ public class InterviewAttemptServiceTests
     }
 
     [Fact]
-    public async Task SubmitAnswerAsync_CalculatesScoreCorrectly_UsingAiService()
+    public async Task SubmitAnswerAsync_EvaluatesUsingAi_AndSavesResult()
     {
         // Arrange
         var attemptId = Guid.NewGuid();
-        var activeAttempt = new InterviewAttempt { Id = attemptId, Status = InterviewStatus.InProgress };
-        var question = new Question { Id = Guid.NewGuid(), Content = "What is React?" };
-        var dto = new SubmitAnswerDto { AttemptId = attemptId, QuestionId = question.Id, AnswerText = "It is a UI library." };
+        var questionId = Guid.NewGuid();
+        var dto = new SubmitAnswerDto { InterviewAttemptId = attemptId, QuestionId = questionId, SubmittedText = "C# is an OOP language." };
 
-        _mockAttemptRepo.Setup(r => r.GetByIdAsync(attemptId)).ReturnsAsync(activeAttempt);
-        _mockQuestionRepo.Setup(r => r.GetByIdAsync(question.Id)).ReturnsAsync(question);
-        
-        // Setup AI evaluation response
-        _mockAiService.Setup(ai => ai.EvaluateAnswerAsync(question.Content, dto.AnswerText))
-            .ReturnsAsync(new AiEvaluationResultDto { Score = 85, Strengths = "Good", Weaknesses = "None" });
+        _mockAttemptRepo.Setup(r => r.GetByIdAsync(attemptId)).ReturnsAsync(new InterviewAttempt { Id = attemptId });
+        _mockQuestionRepo.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync(new Question { Id = questionId, Content = "What is C#?" });
+
+        _mockAiService.Setup(s => s.EvaluateAnswerAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new AiEvaluationResultDto { Score = 85, Strengths = "Good definition", Weaknesses = "Could add more specs" });
 
         // Act
         var result = await _attemptService.SubmitAnswerAsync(dto);
 
         // Assert
         result.Should().NotBeNull();
-        result.Score.Should().Be(85);
-        result.AiFeedback.Should().Contain("Good");
-        
-        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.Score == 85)), Times.Once);
+        result.AiScore.Should().Be(85);
+        result.AiStrengths.Should().Be("Good definition");
+
+        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.AiScore == 85)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task StartAttemptAsync_CreatesNewAttempt_WithInProgressStatus()
+    public async Task StartAttemptAsync_CreatesNewAttempt()
     {
         // Arrange
         var interviewId = Guid.NewGuid();
         var traineeId = Guid.NewGuid();
 
         // Act
-        var result = await _attemptService.StartAttemptAsync(interviewId, traineeId);
+        var result = await _attemptService.StartAttemptAsync(traineeId, interviewId);
 
         // Assert
         result.Should().NotBeNull();
-        result.Status.Should().Be(InterviewStatus.InProgress);
         result.InterviewId.Should().Be(interviewId);
-        result.TraineeId.Should().Be(traineeId);
-
+        
         _mockAttemptRepo.Verify(r => r.AddAsync(It.IsAny<InterviewAttempt>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }

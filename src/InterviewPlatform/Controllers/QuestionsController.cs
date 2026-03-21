@@ -7,6 +7,7 @@ namespace InterviewPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class QuestionsController : ControllerBase
 {
     private readonly IQuestionService _questionService;
@@ -16,17 +17,24 @@ public class QuestionsController : ControllerBase
         _questionService = questionService;
     }
 
-    [HttpPost]
-    [Authorize(Roles = "Admin, Creator")]
-    public async Task<IActionResult> AddQuestion([FromBody] CreateQuestionDto dto)
+    [HttpGet("interview/{interviewId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetByInterviewId(Guid interviewId)
     {
-        var question = await _questionService.AddQuestionAsync(dto);
-        // We do not have a GetQuestionById so we just return Ok with the created object
-        return Ok(question);
+        var questions = await _questionService.GetQuestionsByInterviewIdAsync(interviewId);
+        return Ok(questions);
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin, Creator")]
+    [HttpPost]
+    [Authorize(Roles = "Creator,Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateQuestionDto dto)
+    {
+        var question = await _questionService.AddQuestionAsync(dto);
+        return Created("", question); 
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Creator,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _questionService.DeleteQuestionAsync(id);

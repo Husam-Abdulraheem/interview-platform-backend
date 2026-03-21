@@ -7,6 +7,7 @@ namespace InterviewPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CoursesController : ControllerBase
 {
     private readonly ICourseService _courseService;
@@ -17,13 +18,15 @@ public class CoursesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var courses = await _courseService.GetAllCoursesAsync();
         return Ok(courses);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)
     {
         var course = await _courseService.GetCourseByIdAsync(id);
@@ -32,23 +35,23 @@ public class CoursesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin, Creator")]
+    [Authorize(Roles = "Creator,Admin")]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto dto)
     {
         var course = await _courseService.CreateCourseAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = course.Id }, course);
     }
 
-    [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin, Creator")]
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Creator,Admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCourseDto dto)
     {
         await _courseService.UpdateCourseAsync(id, dto);
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin, Creator")]
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Creator,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _courseService.DeleteCourseAsync(id);

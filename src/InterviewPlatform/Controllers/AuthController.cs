@@ -26,6 +26,10 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto request)
     {
+        // Prevent clients from registering as Admin directly
+        if (request.Role == InterviewPlatform.Core.Enums.Role.Admin)
+            return BadRequest("Cannot register as admin. Admin accounts must be created by an existing admin.");
+
         var success = await _authService.RegisterAsync(request);
         if (!success) return BadRequest("Email is already in use.");
         return Ok("Registration successful.");

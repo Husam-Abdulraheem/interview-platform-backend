@@ -7,6 +7,8 @@ public interface IUserService
 {
     Task<UserProfileDto> GetUserProfileAsync(Guid userId);
     Task<IEnumerable<UserProfileDto>> GetAllUsersAsync();
+    Task<IEnumerable<UserProfileDto>> GetPendingRoleRequestsAsync();
     Task UpdateUserRoleAsync(Guid userId, Role newRole);
     Task DeleteUserAsync(Guid userId);
+    Task ApproveUserRoleRequestAsync(Guid userId);
 }

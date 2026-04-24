@@ -23,10 +23,14 @@ public class AuthService : IAuthService
 
     public async Task<TokenDto?> LoginAsync(LoginDto request)
     {
-        var users = await _unitOfWork.Users.FindAsync(u => u.Email == request.Email && u.PasswordHash == request.Password);
+        var users = await _unitOfWork.Users.FindAsync(u => u.Email == request.Email);
         var user = users.FirstOrDefault();
 
         if (user == null) return null;
+
+        // Verify password hash
+        if (!InterviewPlatform.Application.Services.PasswordHasher.Verify(request.Password, user.PasswordHash))
+            return null;
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? string.Empty);
@@ -60,7 +64,21 @@ public class AuthService : IAuthService
 
         var user = request.Adapt<User>();
         user.Id = Guid.NewGuid();
-        user.PasswordHash = request.Password; 
+        user.PasswordHash = PasswordHasher.Hash(request.Password);
+
+        // Only allow registering as Trainee or requesting Creator role.
+        if (request.Role == InterviewPlatform.Core.Enums.Role.Creator)
+        {
+            user.Role = InterviewPlatform.Core.Enums.Role.Trainee; // default until approved
+            user.RequestedRole = InterviewPlatform.Core.Enums.Role.Creator;
+            user.IsApproved = false;
+        }
+        else
+        {
+            // Default to Trainee for any other value (including Admin if sent)
+            user.Role = InterviewPlatform.Core.Enums.Role.Trainee;
+            user.IsApproved = true;
+        }
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.CompleteAsync();

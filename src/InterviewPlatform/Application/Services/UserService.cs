@@ -44,6 +44,12 @@ public class UserService : IUserService
         return users.Adapt<IEnumerable<UserProfileDto>>();
     }
 
+    public async Task<IEnumerable<UserProfileDto>> GetPendingRoleRequestsAsync()
+    {
+        var users = await _unitOfWork.Users.FindAsync(u => u.RequestedRole != null && !u.IsApproved);
+        return users.Adapt<IEnumerable<UserProfileDto>>();
+    }
+
     public async Task UpdateUserRoleAsync(Guid userId, Role newRole)
     {
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
@@ -60,6 +66,20 @@ public class UserService : IUserService
         if (user == null) throw new NotFoundException($"User with ID {userId} not found.");
 
         _unitOfWork.Users.Remove(user);
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task ApproveUserRoleRequestAsync(Guid userId)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null) throw new NotFoundException($"User with ID {userId} not found.");
+        if (user.RequestedRole == null) throw new InvalidOperationException("User has not requested a role change.");
+
+        user.Role = user.RequestedRole.Value;
+        user.RequestedRole = null;
+        user.IsApproved = true;
+
+        _unitOfWork.Users.Update(user);
         await _unitOfWork.CompleteAsync();
     }
 }

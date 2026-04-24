@@ -45,6 +45,22 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [HttpGet("requests")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetPendingRoleRequests()
+    {
+        var pending = await _userService.GetPendingRoleRequestsAsync();
+        return Ok(pending);
+    }
+
+    [HttpPost("{id:guid}/approve")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ApproveRoleRequest(Guid id)
+    {
+        await _userService.ApproveUserRoleRequestAsync(id);
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}/role")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateRole(Guid id, [FromQuery] Role newRole)

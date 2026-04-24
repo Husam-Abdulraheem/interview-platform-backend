@@ -9,6 +9,9 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public Role Role { get; set; } = Role.Trainee;
+    // Role upgrade request workflow
+    public Role? RequestedRole { get; set; }
+    public bool IsApproved { get; set; } = true;
 
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
     public ICollection<InterviewAttempt> InterviewAttempts { get; set; } = new List<InterviewAttempt>();

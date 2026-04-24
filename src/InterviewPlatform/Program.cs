@@ -10,15 +10,37 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using InterviewPlatform.Application.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+
+// Support DATABASE_URL-style URIs (e.g. postgres://user:pass@host:port/dbname)
+if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+    connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+{
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var builderNs = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Username = userInfo.Length > 0 ? userInfo[0] : string.Empty,
+        Password = userInfo.Length > 1 ? userInfo[1] : string.Empty,
+        Database = uri.AbsolutePath.TrimStart('/'),
+        // Render.com requires SSL; enable and trust server certificate by default for convenience.
+        SslMode = SslMode.Require
+    };
+
+    connectionString = builderNs.ConnectionString;
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

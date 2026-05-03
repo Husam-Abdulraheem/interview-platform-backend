@@ -50,9 +50,9 @@ public class InterviewAttemptServiceTests
         _mockAiService.Setup(s => s.EvaluateAnswerAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new AiEvaluationResultDto { 
                 Score = 85, 
-                Strengths = "Good definition", 
-                Weaknesses = "Could add more specs",
-                Suggestions = "Consider adding specific examples and technical details"
+                Strengths = new List<string> { "Good definition", "Clear explanation" }, 
+                Weaknesses = new List<string> { "Could add more specs", "Needs examples" },
+                Suggestions = new List<string> { "Consider adding specific examples", "Include technical details" }
             });
 
         // Act
@@ -61,10 +61,12 @@ public class InterviewAttemptServiceTests
         // Assert
         result.Should().NotBeNull();
         result.AiScore.Should().Be(85);
-        result.AiStrengths.Should().Be("Good definition");
-        result.AiSuggestions.Should().Be("Consider adding specific examples and technical details");
+        result.AiStrengths.Should().HaveCount(2);
+        result.AiStrengths.Should().Contain("Good definition");
+        result.AiSuggestions.Should().HaveCount(2);
+        result.AiSuggestions.Should().Contain("Consider adding specific examples");
 
-        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.AiScore == 85 && a.AiSuggestions == "Consider adding specific examples and technical details")), Times.Once);
+        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.AiScore == 85 && a.AiSuggestions.Contains("Consider adding specific examples"))), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 

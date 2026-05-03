@@ -7,7 +7,7 @@ public class AnswerAttemptDto
     public Guid QuestionId { get; set; }
     public string SubmittedText { get; set; } = string.Empty;
     public decimal AiScore { get; set; }
-    public string AiStrengths { get; set; } = string.Empty;
-    public string AiWeaknesses { get; set; } = string.Empty;
-    public string AiSuggestions { get; set; } = string.Empty;
+    public List<string> AiStrengths { get; set; } = new List<string>();
+    public List<string> AiWeaknesses { get; set; } = new List<string>();
+    public List<string> AiSuggestions { get; set; } = new List<string>();
 }

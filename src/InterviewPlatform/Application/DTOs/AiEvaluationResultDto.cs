@@ -3,7 +3,7 @@ namespace InterviewPlatform.Application.DTOs;
 public class AiEvaluationResultDto
 {
     public decimal Score { get; set; }
-    public string Strengths { get; set; } = string.Empty;
-    public string Weaknesses { get; set; } = string.Empty;
-    public string Suggestions { get; set; } = string.Empty;
+    public List<string> Strengths { get; set; } = new List<string>();
+    public List<string> Weaknesses { get; set; } = new List<string>();
+    public List<string> Suggestions { get; set; } = new List<string>();
 }

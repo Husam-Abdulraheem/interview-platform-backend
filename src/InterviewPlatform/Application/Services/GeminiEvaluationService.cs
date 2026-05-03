@@ -25,7 +25,7 @@ public class GeminiEvaluationService : IAiEvaluationService
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Gemini API Key is missing.");
 
-        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": \"string describing strengths\",\n  \"weaknesses\": \"string describing weaknesses\",\n  \"suggestions\": \"string with actionable suggestions for improvement\"\n}}\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
+        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": [\"array of strings describing strengths\"],\n  \"weaknesses\": [\"array of strings describing weaknesses\"],\n  \"suggestions\": [\"array of strings with actionable suggestions for improvement\"]\n}}\n\nProvide 3-5 specific points for each array.\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
 
         try
         {
@@ -62,9 +62,9 @@ public class GeminiEvaluationService : IAiEvaluationService
             return new AiEvaluationResultDto
             {
                 Score = 0,
-                Strengths = string.Empty,
-                Weaknesses = "Failed to parse AI response.",
-                Suggestions = string.Empty
+                Strengths = new List<string>(),
+                Weaknesses = new List<string> { "Failed to parse AI response." },
+                Suggestions = new List<string>()
             };
         }
         catch (Exception ex)
@@ -73,9 +73,9 @@ public class GeminiEvaluationService : IAiEvaluationService
             return new AiEvaluationResultDto
             {
                 Score = 0,
-                Strengths = string.Empty,
-                Weaknesses = $"AI evaluation failed: {ex.Message}",
-                Suggestions = string.Empty
+                Strengths = new List<string>(),
+                Weaknesses = new List<string> { $"AI evaluation failed: {ex.Message}" },
+                Suggestions = new List<string>()
             };
         }
     }

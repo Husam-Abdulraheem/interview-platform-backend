@@ -10,7 +10,7 @@ public class GeminiEvaluationService : IAiEvaluationService
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
-    private readonly string _modelName = "gemini-1.5-pro";
+    private readonly string _modelName = "gemini-2.5-flash";
 
     public GeminiEvaluationService(HttpClient httpClient, IConfiguration configuration)
     {

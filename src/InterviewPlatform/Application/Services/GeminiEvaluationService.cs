@@ -25,35 +25,41 @@ public class GeminiEvaluationService : IAiEvaluationService
 
         // Construct standard prompt
         var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": \"string describing strengths\",\n  \"weaknesses\": \"string describing weaknesses\",\n  \"suggestions\": \"string with actionable suggestions for improvement\"\n}}\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
-        
+
         var requestBody = new
         {
             contents = new[]
             {
-                new { parts = new[] { new { text = prompt } } }
-            },
-            generationConfig = new { 
-                response_mime_type = "application/json",
+            new { parts = new[] { new { text = prompt } } }
+        },
+            generationConfig = new
+            {
+                responseMimeType = "application/json",
                 temperature = 0.7,
                 maxOutputTokens = 1000
             }
         };
 
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_modelName}:generateContent?key={_apiKey}";
-        
+
         try
         {
             var response = await _httpClient.PostAsJsonAsync(url, requestBody);
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Gemini API Error ({response.StatusCode}): {errorContent}");
+            }
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Gemini API Response: {jsonResponse}");
-            
+
             using var jsonDoc = JsonDocument.Parse(jsonResponse);
 
             // Parse Google's response structure
             var root = jsonDoc.RootElement;
-            
+
             if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
             {
                 var content = candidates[0].GetProperty("content");
@@ -63,6 +69,8 @@ public class GeminiEvaluationService : IAiEvaluationService
                     var textObj = parts[0].GetProperty("text").GetString();
                     if (!string.IsNullOrEmpty(textObj))
                     {
+                        textObj = textObj.Replace("```json", "").Replace("```", "").Trim();
+
                         // Deserialize the strongly typed our expected JSON format
                         var evaluation = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (evaluation != null)

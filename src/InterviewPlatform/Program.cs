@@ -66,8 +66,8 @@ builder.Services.RegisterMapsterConfiguration();
 // FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCourseDtoValidator>();
 
-// Gemini API HttpClient
-builder.Services.AddHttpClient<IAiEvaluationService, GeminiEvaluationService>();
+// Gemini AI Service
+builder.Services.AddScoped<IAiEvaluationService, GeminiEvaluationService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

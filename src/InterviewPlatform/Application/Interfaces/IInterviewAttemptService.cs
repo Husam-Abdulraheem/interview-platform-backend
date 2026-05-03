@@ -8,4 +8,5 @@ public interface IInterviewAttemptService
     Task<AnswerAttemptDto> SubmitAnswerAsync(SubmitAnswerDto dto);
     Task<InterviewAttemptDto> CompleteAttemptAsync(Guid attemptId);
     Task<InterviewAttemptDto?> GetAttemptDetailsAsync(Guid attemptId);
+    Task<IEnumerable<InterviewAttemptDto>> GetUserAttemptsAsync(Guid userId);
 }

@@ -1,9 +1,7 @@
 namespace InterviewPlatform.Application.DTOs;
 
-public class CreateQuestionDto
+public class UpdateQuestionDto
 {
-    public Guid InterviewId { get; set; }
-    public Guid? CourseId { get; set; }
     public string Content { get; set; } = string.Empty;
     public int OrderIndex { get; set; }
 }

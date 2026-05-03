@@ -96,4 +96,9 @@ public class GeminiEvaluationService : IAiEvaluationService
             };
         }
     }
+
+    public async Task<AiEvaluationResultDto> EvaluateDirectAsync(EvaluationRequestDto request)
+    {
+        return await EvaluateAnswerAsync(request.Question, request.Answer);
+    }
 }

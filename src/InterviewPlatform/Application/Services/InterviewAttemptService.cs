@@ -84,14 +84,24 @@ public class InterviewAttemptService : IInterviewAttemptService
         return attempt.Adapt<InterviewAttemptDto>();
     }
 
-    public async Task<InterviewAttemptDto?> GetAttemptDetailsAsync(Guid attemptId)
+    public async Task<InterviewAttemptDto?> GetAttemptDetailsAsync(Guid id)
     {
-        var attempt = await _unitOfWork.InterviewAttempts.GetByIdAsync(attemptId);
+        var attempt = await _unitOfWork.InterviewAttempts.GetByIdAsync(id);
         if (attempt == null) return null;
 
-        var answers = await _unitOfWork.AnswerAttempts.FindAsync(a => a.InterviewAttemptId == attemptId);
-        attempt.AnswerAttempts = answers.ToList();
+        var questions = await _unitOfWork.Questions.FindAsync(q => q.InterviewId == attempt.InterviewId);
+        var answerAttempts = await _unitOfWork.AnswerAttempts.FindAsync(a => a.InterviewAttemptId == id);
 
-        return attempt.Adapt<InterviewAttemptDto>();
+        var attemptDto = attempt.Adapt<InterviewAttemptDto>();
+        attemptDto.Questions = questions.Adapt<List<QuestionDto>>();
+        attemptDto.AnswerAttempts = answerAttempts.Adapt<List<AnswerAttemptDto>>();
+
+        return attemptDto;
+    }
+
+    public async Task<IEnumerable<InterviewAttemptDto>> GetUserAttemptsAsync(Guid userId)
+    {
+        var attempts = await _unitOfWork.InterviewAttempts.FindAsync(a => a.TraineeId == userId);
+        return attempts.OrderByDescending(a => a.StartedAt).Adapt<IEnumerable<InterviewAttemptDto>>();
     }
 }

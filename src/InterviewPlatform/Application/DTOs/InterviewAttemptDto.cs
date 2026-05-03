@@ -9,5 +9,6 @@ public class InterviewAttemptDto
     public DateTime? CompletedAt { get; set; }
     public decimal TotalScore { get; set; }
 
+    public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
     public ICollection<AnswerAttemptDto> AnswerAttempts { get; set; } = new List<AnswerAttemptDto>();
 }

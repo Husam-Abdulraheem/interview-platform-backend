@@ -48,4 +48,13 @@ public class InterviewAttemptsController : ControllerBase
         if (details == null) return NotFound();
         return Ok(details);
     }
+
+    [HttpGet("my-attempts")]
+    public async Task<IActionResult> GetMyAttempts()
+    {
+        // Get current user ID from token
+        var currentUserId = Guid.Parse(User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value ?? "");
+        var attempts = await _attemptService.GetUserAttemptsAsync(currentUserId);
+        return Ok(attempts);
+    }
 }

@@ -34,6 +34,14 @@ public class CoursesController : ControllerBase
         return Ok(course);
     }
 
+    [HttpGet("my-courses")]
+    [Authorize]
+    public async Task<IActionResult> GetMyCourses()
+    {
+        var courses = await _courseService.GetMyCoursesAsync();
+        return Ok(courses);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Creator,Admin")]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto dto)

@@ -48,7 +48,12 @@ public class InterviewAttemptServiceTests
         _mockQuestionRepo.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync(new Question { Id = questionId, Content = "What is C#?" });
 
         _mockAiService.Setup(s => s.EvaluateAnswerAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new AiEvaluationResultDto { Score = 85, Strengths = "Good definition", Weaknesses = "Could add more specs" });
+            .ReturnsAsync(new AiEvaluationResultDto { 
+                Score = 85, 
+                Strengths = "Good definition", 
+                Weaknesses = "Could add more specs",
+                Suggestions = "Consider adding specific examples and technical details"
+            });
 
         // Act
         var result = await _attemptService.SubmitAnswerAsync(dto);
@@ -57,8 +62,9 @@ public class InterviewAttemptServiceTests
         result.Should().NotBeNull();
         result.AiScore.Should().Be(85);
         result.AiStrengths.Should().Be("Good definition");
+        result.AiSuggestions.Should().Be("Consider adding specific examples and technical details");
 
-        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.AiScore == 85)), Times.Once);
+        _mockAnswerRepo.Verify(r => r.AddAsync(It.Is<AnswerAttempt>(a => a.AiScore == 85 && a.AiSuggestions == "Consider adding specific examples and technical details")), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 

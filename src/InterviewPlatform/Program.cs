@@ -12,6 +12,10 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using Npgsql;
 using InterviewPlatform.Application.Middlewares;
+using DotNetEnv;
+
+// Load .env file
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 

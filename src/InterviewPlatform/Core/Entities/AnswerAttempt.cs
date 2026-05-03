@@ -9,6 +9,7 @@ public class AnswerAttempt
     public decimal AiScore { get; set; }
     public string AiStrengths { get; set; } = string.Empty;
     public string AiWeaknesses { get; set; } = string.Empty;
+    public string AiSuggestions { get; set; } = string.Empty;
 
     public InterviewAttempt InterviewAttempt { get; set; } = null!;
     public Question Question { get; set; } = null!;

@@ -34,6 +34,79 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task RegisterAsync_CreatesTrainee_WhenNoRoleRequested()
+    {
+        // Arrange
+        _mockUserRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User>());
+
+        User? captured = null;
+        _mockUserRepo.Setup(r => r.AddAsync(It.IsAny<User>()))
+            .Callback<User>(u => captured = u)
+            .Returns(Task.CompletedTask);
+
+        var dto = new RegisterDto { Email = "new@test.com", Password = "P@ssword1", FullName = "New User" };
+
+        // Act
+        var result = await _authService.RegisterAsync(dto);
+
+        // Assert
+        result.Should().BeTrue();
+        captured.Should().NotBeNull();
+        captured!.Role.Should().Be(Role.Trainee);
+        captured.IsApproved.Should().BeTrue();
+        captured.RequestedRole.Should().BeNull();
+        // password should be hashed and verify correctly
+        PasswordHasher.Verify(dto.Password, captured.PasswordHash).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RegisterAsync_RequestCreator_SetsRequestedRoleAndNotApproved()
+    {
+        // Arrange
+        _mockUserRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>() ))
+            .ReturnsAsync(new List<User>());
+
+        User? captured = null;
+        _mockUserRepo.Setup(r => r.AddAsync(It.IsAny<User>()))
+            .Callback<User>(u => captured = u)
+            .Returns(Task.CompletedTask);
+
+        var dto = new RegisterDto { Email = "creator@test.com", Password = "CreatorPwd1", FullName = "Creator User", Role = Role.Creator };
+
+        // Act
+        var result = await _authService.RegisterAsync(dto);
+
+        // Assert
+        result.Should().BeTrue();
+        captured.Should().NotBeNull();
+        captured!.Role.Should().Be(Role.Trainee); // still trainee until approved
+        captured.RequestedRole.Should().Be(Role.Creator);
+        captured.IsApproved.Should().BeFalse();
+        PasswordHasher.Verify(dto.Password, captured.PasswordHash).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task LoginAsync_ReturnsToken_WhenCredentialsAreValid()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid(), Email = "valid@test.com", FullName = "Valid User" };
+        user.PasswordHash = PasswordHasher.Hash("validpwd");
+
+        _mockUserRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>() ))
+            .ReturnsAsync(new List<User> { user });
+
+        var dto = new LoginDto { Email = "valid@test.com", Password = "validpwd" };
+
+        // Act
+        var token = await _authService.LoginAsync(dto);
+
+        // Assert
+        token.Should().NotBeNull();
+        token!.Token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
     public async Task LoginAsync_ReturnsNull_WhenCredentialsAreInvalid()
     {
         // Arrange

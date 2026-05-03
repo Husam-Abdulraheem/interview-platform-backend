@@ -67,4 +67,10 @@ public class CourseService : ICourseService
         _unitOfWork.Courses.Remove(course);
         await _unitOfWork.CompleteAsync();
     }
+
+    public async Task<IEnumerable<CourseDto>> GetMyCoursesAsync()
+    {
+        var courses = await _unitOfWork.Courses.FindAsync(c => c.CreatorId == _currentUserContext.UserId);
+        return courses.Adapt<IEnumerable<CourseDto>>();
+    }
 }

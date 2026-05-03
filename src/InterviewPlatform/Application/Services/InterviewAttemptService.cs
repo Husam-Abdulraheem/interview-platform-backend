@@ -54,7 +54,8 @@ public class InterviewAttemptService : IInterviewAttemptService
             SubmittedText = dto.SubmittedText,
             AiScore = evaluationResult.Score,
             AiStrengths = evaluationResult.Strengths,
-            AiWeaknesses = evaluationResult.Weaknesses
+            AiWeaknesses = evaluationResult.Weaknesses,
+            AiSuggestions = evaluationResult.Suggestions
         };
 
         await _unitOfWork.AnswerAttempts.AddAsync(answer);

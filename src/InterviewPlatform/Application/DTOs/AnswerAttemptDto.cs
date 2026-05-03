@@ -9,4 +9,5 @@ public class AnswerAttemptDto
     public decimal AiScore { get; set; }
     public string AiStrengths { get; set; } = string.Empty;
     public string AiWeaknesses { get; set; } = string.Empty;
+    public string AiSuggestions { get; set; } = string.Empty;
 }

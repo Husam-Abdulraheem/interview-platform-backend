@@ -3,6 +3,7 @@ using System;
 using InterviewPlatform.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InterviewPlatform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424234448_EditDbField")]
+    partial class EditDbField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,10 +36,6 @@ namespace InterviewPlatform.Migrations
                         .HasColumnType("numeric(5,2)");
 
                     b.Property<string>("AiStrengths")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("AiSuggestions")
                         .IsRequired()
                         .HasColumnType("text");
 

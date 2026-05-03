@@ -24,7 +24,7 @@ public class GeminiEvaluationService : IAiEvaluationService
             throw new InvalidOperationException("Gemini API Key is missing.");
 
         // Construct standard prompt
-        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": \"string describing strengths\",\n  \"weaknesses\": \"string describing weaknesses\"\n}}\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
+        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": \"string describing strengths\",\n  \"weaknesses\": \"string describing weaknesses\",\n  \"suggestions\": \"string with actionable suggestions for improvement\"\n}}\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
         
         var requestBody = new
         {

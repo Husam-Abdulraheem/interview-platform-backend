@@ -88,4 +88,60 @@ public class CourseServiceTests
         _mockCourseRepo.Verify(r => r.AddAsync(It.Is<Course>(c => c.CreatorId == callerId)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
+
+    [Fact]
+    public async Task GetMyCoursesAsync_ReturnsOnlyCoursesForCurrentUser()
+    {
+        // Arrange
+        var currentUserId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        
+        var myCourses = new List<Course>
+        {
+            new Course { Id = Guid.NewGuid(), CreatorId = currentUserId, Title = "My Course 1" },
+            new Course { Id = Guid.NewGuid(), CreatorId = currentUserId, Title = "My Course 2" }
+        };
+        
+        var otherCourses = new List<Course>
+        {
+            new Course { Id = Guid.NewGuid(), CreatorId = otherUserId, Title = "Other User Course" }
+        };
+
+        _mockUserContext.Setup(c => c.UserId).Returns(currentUserId);
+        _mockCourseRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Course, bool>>>()))
+            .ReturnsAsync(myCourses);
+
+        // Act
+        var result = await _courseService.GetMyCoursesAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        
+        // Verify only current user's courses are returned
+        result.All(c => myCourses.Any(mc => mc.Id == c.Id)).Should().BeTrue();
+        
+        // Verify FindAsync was called with correct filter
+        _mockCourseRepo.Verify(r => r.FindAsync(It.Is<System.Linq.Expressions.Expression<Func<Course, bool>>>(
+            expr => expr.ToString().Contains("CreatorId"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetMyCoursesAsync_ReturnsEmptyList_WhenUserHasNoCourses()
+    {
+        // Arrange
+        var currentUserId = Guid.NewGuid();
+        var emptyCourses = new List<Course>();
+
+        _mockUserContext.Setup(c => c.UserId).Returns(currentUserId);
+        _mockCourseRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Course, bool>>>()))
+            .ReturnsAsync(emptyCourses);
+
+        // Act
+        var result = await _courseService.GetMyCoursesAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
 }

@@ -32,37 +32,56 @@ public class GeminiEvaluationService : IAiEvaluationService
             {
                 new { parts = new[] { new { text = prompt } } }
             },
-            generationConfig = new { response_mime_type = "application/json" }
+            generationConfig = new { 
+                response_mime_type = "application/json",
+                temperature = 0.7,
+                maxOutputTokens = 1000
+            }
         };
 
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_modelName}:generateContent?key={_apiKey}";
         
-        var response = await _httpClient.PostAsJsonAsync(url, requestBody);
-        response.EnsureSuccessStatusCode();
-
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-        using var jsonDoc = JsonDocument.Parse(jsonResponse);
-
-        // Parse Google's response structure
-        var root = jsonDoc.RootElement;
-        
-        if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+        try
         {
-            var content = candidates[0].GetProperty("content");
-            var parts = content.GetProperty("parts");
-            if (parts.GetArrayLength() > 0)
+            var response = await _httpClient.PostAsJsonAsync(url, requestBody);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Gemini API Response: {jsonResponse}");
+            
+            using var jsonDoc = JsonDocument.Parse(jsonResponse);
+
+            // Parse Google's response structure
+            var root = jsonDoc.RootElement;
+            
+            if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
             {
-                var textObj = parts[0].GetProperty("text").GetString();
-                if (!string.IsNullOrEmpty(textObj))
+                var content = candidates[0].GetProperty("content");
+                var parts = content.GetProperty("parts");
+                if (parts.GetArrayLength() > 0)
                 {
-                    // Deserialize the strongly typed our expected JSON format
-                    var evaluation = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (evaluation != null)
-                        return evaluation;
+                    var textObj = parts[0].GetProperty("text").GetString();
+                    if (!string.IsNullOrEmpty(textObj))
+                    {
+                        // Deserialize the strongly typed our expected JSON format
+                        var evaluation = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (evaluation != null)
+                            return evaluation;
+                    }
                 }
             }
-        }
 
-        return new AiEvaluationResultDto { Score = 0, Strengths = string.Empty, Weaknesses = "Failed to parse AI response." };
+            return new AiEvaluationResultDto { Score = 0, Strengths = string.Empty, Weaknesses = "Failed to parse AI response.", Suggestions = string.Empty };
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Gemini API HTTP Error: {ex.Message}");
+            throw new InvalidOperationException($"Failed to call Gemini API: {ex.Message}", ex);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Gemini API Error: {ex.Message}");
+            return new AiEvaluationResultDto { Score = 0, Strengths = string.Empty, Weaknesses = $"AI evaluation failed: {ex.Message}", Suggestions = string.Empty };
+        }
     }
 }

@@ -1,6 +1,8 @@
 using InterviewPlatform.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Reflection;
+using System.Text.Json;
 
 namespace InterviewPlatform.Infrastructure.Data;
 
@@ -19,5 +21,23 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // Configure List<string> to JSON conversion for AnswerAttempt
+        var stringListConverter = new ValueConverter<List<string>, string>(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+            v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
+        );
+
+        modelBuilder.Entity<AnswerAttempt>()
+            .Property(a => a.AiStrengths)
+            .HasConversion(stringListConverter);
+
+        modelBuilder.Entity<AnswerAttempt>()
+            .Property(a => a.AiWeaknesses)
+            .HasConversion(stringListConverter);
+
+        modelBuilder.Entity<AnswerAttempt>()
+            .Property(a => a.AiSuggestions)
+            .HasConversion(stringListConverter);
     }
 }

@@ -15,8 +15,8 @@ public class GeminiEvaluationService : IAiEvaluationService
 
     public GeminiEvaluationService(IConfiguration configuration)
     {
-        _apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
-                          ?? configuration["GEMINI_API_KEY"]
+        _apiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey")
+                          ?? configuration["Gemini__ApiKey"]
                           ?? string.Empty;
     }
 
@@ -50,13 +50,30 @@ public class GeminiEvaluationService : IAiEvaluationService
             {
                 textObj = textObj.Replace("```json", "").Replace("```", "").Trim();
 
-                var evaluation = JsonSerializer.Deserialize<AiEvaluationResultDto>(
-                    textObj,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                );
+                // Ensure your JSON options are flexible enough to handle AI output
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                };
 
-                if (evaluation != null)
-                    return evaluation;
+                // 3. Parse the result directly into your DTO
+                try
+                {
+                    var evaluationResult = JsonSerializer.Deserialize<AiEvaluationResultDto>(response.Text, jsonOptions);
+                    
+                    // Proceed to map 'evaluationResult' to your InterviewAttempt/AnswerAttempt entities
+                    if (evaluationResult != null)
+                        return evaluationResult;
+                }
+                catch (JsonException ex)
+                {
+                    // Log the actual text returned by Gemini to see why it failed parsing
+                    Console.WriteLine($"JSON Parsing Error: {ex.Message}");
+                    Console.WriteLine($"AI Response Text: {response.Text}");
+                    
+                    // Throw a proper architectural exception, not a raw crash
+                    throw new InvalidOperationException("Failed to parse AI evaluation data. Check the AI prompt or output format.", ex);
+                }
             }
 
             return new AiEvaluationResultDto

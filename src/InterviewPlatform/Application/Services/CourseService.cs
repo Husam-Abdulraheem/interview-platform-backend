@@ -26,7 +26,15 @@ public class CourseService : ICourseService
     public async Task<CourseDto?> GetCourseByIdAsync(Guid id)
     {
         var course = await _unitOfWork.Courses.GetByIdAsync(id);
-        return course?.Adapt<CourseDto>();
+        if (course == null) return null;
+        
+        var courseDto = course.Adapt<CourseDto>();
+        
+        // Include questions for this course
+        var courseQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == id);
+        courseDto.Questions = courseQuestions.Adapt<List<QuestionDto>>();
+        
+        return courseDto;
     }
 
     public async Task<CourseDto> CreateCourseAsync(CreateCourseDto dto)

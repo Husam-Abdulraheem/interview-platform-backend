@@ -11,4 +11,5 @@ public class CourseDto
     public string YouTubeVideoUrl { get; set; } = string.Empty;
     public string ContentMaterial { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
 }

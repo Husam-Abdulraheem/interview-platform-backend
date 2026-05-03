@@ -14,4 +14,5 @@ public class Course
 
     public User Creator { get; set; } = null!;
     public Interview? Interview { get; set; }
+    public ICollection<Question> Questions { get; set; } = new List<Question>();
 }

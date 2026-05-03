@@ -39,5 +39,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<AnswerAttempt>()
             .Property(a => a.AiSuggestions)
             .HasConversion(stringListConverter);
+
+        // Configure Course-Question relationship
+        modelBuilder.Entity<Question>()
+            .HasOne(q => q.Course)
+            .WithMany(c => c.Questions)
+            .HasForeignKey(q => q.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

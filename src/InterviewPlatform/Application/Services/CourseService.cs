@@ -69,7 +69,7 @@ public class CourseService : ICourseService
         if (!_currentUserContext.IsAdmin && course.CreatorId != _currentUserContext.UserId)
             throw new ForbiddenException("You do not have permission to update this course.");
 
-        // Partial updates: Only update provided fields
+        // Partial updates
         if (dto.Title != null) course.Title = dto.Title;
         if (dto.Description != null) course.Description = dto.Description;
         if (dto.IsGeneral != null) course.IsGeneral = dto.IsGeneral.Value;
@@ -79,21 +79,23 @@ public class CourseService : ICourseService
 
         if (dto.Questions != null)
         {
-            // Remove existing questions from DB
+            // First, remove old questions and commit
             var existingQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == id);
             _unitOfWork.Questions.RemoveRange(existingQuestions);
+            await _unitOfWork.CompleteAsync();
 
-            // Add new questions
-            course.Questions = dto.Questions.Select((q, index) => new Question
+            // Then, add new questions
+            var newQuestions = dto.Questions.Select((q, index) => new Question
             {
                 Id = Guid.NewGuid(),
                 Content = q,
                 OrderIndex = index,
                 CourseId = id
             }).ToList();
+            await _unitOfWork.Questions.AddRangeAsync(newQuestions);
         }
         
-        // No need for manual _unitOfWork.Courses.Update(course) as it's already tracked
+        _unitOfWork.Courses.Update(course);
         await _unitOfWork.CompleteAsync();
     }
 

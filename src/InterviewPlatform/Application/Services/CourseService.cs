@@ -44,6 +44,17 @@ public class CourseService : ICourseService
         course.CreatedAt = DateTime.UtcNow;
         course.CreatorId = _currentUserContext.UserId; // Automatically assign the Creator
 
+        if (dto.Questions != null && dto.Questions.Any())
+        {
+            course.Questions = dto.Questions.Select((q, index) => new Question
+            {
+                Id = Guid.NewGuid(),
+                Content = q,
+                OrderIndex = index,
+                CourseId = course.Id
+            }).ToList();
+        }
+
         await _unitOfWork.Courses.AddAsync(course);
         await _unitOfWork.CompleteAsync();
 
@@ -59,6 +70,22 @@ public class CourseService : ICourseService
             throw new ForbiddenException("You do not have permission to update this course.");
 
         dto.Adapt(course);
+
+        if (dto.Questions != null)
+        {
+            // Remove existing questions
+            var existingQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == id);
+            _unitOfWork.Questions.RemoveRange(existingQuestions);
+
+            // Add new questions
+            course.Questions = dto.Questions.Select((q, index) => new Question
+            {
+                Id = Guid.NewGuid(),
+                Content = q,
+                OrderIndex = index,
+                CourseId = id
+            }).ToList();
+        }
         
         _unitOfWork.Courses.Update(course);
         await _unitOfWork.CompleteAsync();

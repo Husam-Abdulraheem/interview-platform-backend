@@ -31,8 +31,8 @@ public class UserService : IUserService
 
         if (user.Role == Core.Enums.Role.Trainee)
         {
-            var attempts = await _unitOfWork.InterviewAttempts.FindAsync(a => a.TraineeId == userId);
-            dto.InterviewAttemptsCount = attempts.Count();
+            // Simplified: No longer tracking interview attempts here
+            dto.InterviewAttemptsCount = 0;
         }
 
         return dto;

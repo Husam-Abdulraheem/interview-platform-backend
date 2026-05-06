@@ -14,5 +14,4 @@ public class User
     public bool IsApproved { get; set; } = true;
 
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
-    public ICollection<InterviewAttempt> InterviewAttempts { get; set; } = new List<InterviewAttempt>();
 }

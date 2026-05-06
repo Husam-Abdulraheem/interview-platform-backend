@@ -25,15 +25,8 @@ public static class MappingConfig
               
         config.NewConfig<User, UserProfileDto>();
         
-        config.NewConfig<Interview, InterviewDto>();
-        config.NewConfig<CreateInterviewDto, Interview>();
-        config.NewConfig<UpdateInterviewDto, Interview>();
-
         config.NewConfig<Question, QuestionDto>();
         config.NewConfig<CreateQuestionDto, Question>();
-
-        config.NewConfig<InterviewAttempt, InterviewAttemptDto>();
-        config.NewConfig<AnswerAttempt, AnswerAttemptDto>();
 
         // Register mapper
         services.AddSingleton(config);

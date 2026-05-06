@@ -20,11 +20,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .WithOne(c => c.Creator)
                .HasForeignKey(c => c.CreatorId)
                .OnDelete(DeleteBehavior.Restrict);
-
-        // A user can have many interview attempts (Trainee)
-        builder.HasMany(e => e.InterviewAttempts)
-               .WithOne(ia => ia.Trainee)
-               .HasForeignKey(ia => ia.TraineeId)
-               .OnDelete(DeleteBehavior.Restrict);
     }
 }

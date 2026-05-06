@@ -8,4 +8,5 @@ public class UpdateCourseDto
     public string? Specialty { get; set; }
     public string YouTubeVideoUrl { get; set; } = string.Empty;
     public string ContentMaterial { get; set; } = string.Empty;
+    public List<string> Questions { get; set; } = new List<string>();
 }

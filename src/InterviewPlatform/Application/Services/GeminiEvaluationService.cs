@@ -28,7 +28,7 @@ public class GeminiEvaluationService : IAiEvaluationService
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Gemini API Key is missing.");
 
-        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"strengths\": [\"array of strings describing strengths\"],\n  \"weaknesses\": [\"array of strings describing weaknesses\"],\n  \"suggestions\": [\"array of strings with actionable suggestions for improvement\"]\n}}\n\nProvide 3-5 specific points for each array.\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
+        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"generalFeedback\": \"overall evaluation summary\",\n  \"strengths\": [\"array of strings describing strengths\"],\n  \"weaknesses\": [\"array of strings describing weaknesses\"],\n  \"suggestions\": [\"array of strings with actionable suggestions for improvement\"]\n}}\n\nProvide 3-5 specific points for each array.\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
 
         try
         {
@@ -91,6 +91,7 @@ public class GeminiEvaluationService : IAiEvaluationService
             return new AiEvaluationResultDto
             {
                 Score = 0,
+                GeneralFeedback = "Failed to parse AI response.",
                 Strengths = new List<string>(),
                 Weaknesses = new List<string> { "Failed to parse AI response." },
                 Suggestions = new List<string>()
@@ -102,6 +103,7 @@ public class GeminiEvaluationService : IAiEvaluationService
             return new AiEvaluationResultDto
             {
                 Score = 0,
+                GeneralFeedback = $"AI evaluation failed: {ex.Message}",
                 Strengths = new List<string>(),
                 Weaknesses = new List<string> { $"AI evaluation failed: {ex.Message}" },
                 Suggestions = new List<string>()

@@ -55,9 +55,6 @@ builder.Services.AddScoped<ICurrentUserContext, InterviewPlatform.Infrastructure
 
 // Application Services
 builder.Services.AddScoped<ICourseService, CourseService>();
-builder.Services.AddScoped<IInterviewService, InterviewService>();
-builder.Services.AddScoped<IQuestionService, QuestionService>();
-builder.Services.AddScoped<IInterviewAttemptService, InterviewAttemptService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 // Mapster

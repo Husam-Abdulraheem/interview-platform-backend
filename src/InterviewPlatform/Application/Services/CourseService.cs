@@ -69,7 +69,13 @@ public class CourseService : ICourseService
         if (!_currentUserContext.IsAdmin && course.CreatorId != _currentUserContext.UserId)
             throw new ForbiddenException("You do not have permission to update this course.");
 
-        dto.Adapt(course);
+        // Partial updates: Only update provided fields
+        if (dto.Title != null) course.Title = dto.Title;
+        if (dto.Description != null) course.Description = dto.Description;
+        if (dto.IsGeneral != null) course.IsGeneral = dto.IsGeneral.Value;
+        if (dto.Specialty != null) course.Specialty = dto.Specialty;
+        if (dto.YouTubeVideoUrl != null) course.YouTubeVideoUrl = dto.YouTubeVideoUrl;
+        if (dto.ContentMaterial != null) course.ContentMaterial = dto.ContentMaterial;
 
         if (dto.Questions != null)
         {

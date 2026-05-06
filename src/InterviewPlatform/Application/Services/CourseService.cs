@@ -79,7 +79,7 @@ public class CourseService : ICourseService
 
         if (dto.Questions != null)
         {
-            // Remove existing questions
+            // Remove existing questions from DB
             var existingQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == id);
             _unitOfWork.Questions.RemoveRange(existingQuestions);
 
@@ -93,7 +93,7 @@ public class CourseService : ICourseService
             }).ToList();
         }
         
-        _unitOfWork.Courses.Update(course);
+        // No need for manual _unitOfWork.Courses.Update(course) as it's already tracked
         await _unitOfWork.CompleteAsync();
     }
 

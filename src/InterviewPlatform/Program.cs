@@ -67,7 +67,11 @@ builder.Services.RegisterMapsterConfiguration();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCourseDtoValidator>();
 
 // Gemini AI Service
-builder.Services.AddScoped<IAiEvaluationService, GeminiEvaluationService>();
+builder.Services.AddScoped<IAiEvaluationService>(sp => 
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new GeminiEvaluationService(config);
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

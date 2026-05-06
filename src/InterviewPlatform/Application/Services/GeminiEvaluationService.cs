@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using InterviewPlatform.Application.DTOs;
 using InterviewPlatform.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -15,9 +15,12 @@ public class GeminiEvaluationService : IAiEvaluationService
 
     public GeminiEvaluationService(IConfiguration configuration)
     {
-        _apiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey")
-                          ?? configuration["Gemini__ApiKey"]
-                          ?? string.Empty;
+        _apiKey = configuration["Gemini:ApiKey"] 
+                  ?? configuration["Gemini__ApiKey"]
+                  ?? configuration["GEMINI_API_KEY"]
+                  ?? System.Environment.GetEnvironmentVariable("Gemini__ApiKey")
+                  ?? System.Environment.GetEnvironmentVariable("GEMINI_API_KEY")
+                  ?? string.Empty;
     }
 
     public async Task<AiEvaluationResultDto> EvaluateAnswerAsync(string questionContent, string traineeAnswer)
@@ -48,7 +51,16 @@ public class GeminiEvaluationService : IAiEvaluationService
 
             if (!string.IsNullOrEmpty(textObj))
             {
+                // Remove markdown code blocks if present
                 textObj = textObj.Replace("```json", "").Replace("```", "").Trim();
+
+                // Robustly extract the JSON object in case of extra text
+                int start = textObj.IndexOf('{');
+                int end = textObj.LastIndexOf('}');
+                if (start != -1 && end != -1 && end > start)
+                {
+                    textObj = textObj.Substring(start, end - start + 1);
+                }
 
                 // Ensure your JSON options are flexible enough to handle AI output
                 var jsonOptions = new JsonSerializerOptions 
@@ -59,7 +71,7 @@ public class GeminiEvaluationService : IAiEvaluationService
                 // 3. Parse the result directly into your DTO
                 try
                 {
-                    var evaluationResult = JsonSerializer.Deserialize<AiEvaluationResultDto>(response.Text, jsonOptions);
+                    var evaluationResult = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, jsonOptions);
                     
                     // Proceed to map 'evaluationResult' to your InterviewAttempt/AnswerAttempt entities
                     if (evaluationResult != null)

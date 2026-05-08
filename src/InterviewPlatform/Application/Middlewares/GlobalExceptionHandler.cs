@@ -9,46 +9,40 @@ public class GlobalExceptionHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var problemDetails = new ProblemDetails
-        {
-            Instance = httpContext.Request.Path
-        };
+        var statusCode = StatusCodes.Status500InternalServerError;
+        var message = "An unexpected error occurred.";
 
         if (exception is NotFoundException notFoundException)
         {
-            problemDetails.Title = "Resource not found";
-            problemDetails.Status = StatusCodes.Status404NotFound;
-            problemDetails.Detail = notFoundException.Message;
+            statusCode = StatusCodes.Status404NotFound;
+            message = notFoundException.Message;
         }
         else if (exception is ValidationException validationException)
         {
-            problemDetails.Title = "Validation Error";
-            problemDetails.Status = StatusCodes.Status400BadRequest;
-            problemDetails.Detail = validationException.Message;
+            statusCode = StatusCodes.Status400BadRequest;
+            message = validationException.Message;
         }
         else if (exception is ForbiddenException forbiddenException)
         {
-            problemDetails.Title = "Forbidden";
-            problemDetails.Status = StatusCodes.Status403Forbidden;
-            problemDetails.Detail = forbiddenException.Message;
+            statusCode = StatusCodes.Status403Forbidden;
+            message = forbiddenException.Message;
         }
         else if (exception is InvalidOperationException invalidOpException)
         {
-            problemDetails.Title = "Invalid Operation";
-            problemDetails.Status = StatusCodes.Status400BadRequest;
-            problemDetails.Detail = invalidOpException.Message;
+            statusCode = StatusCodes.Status400BadRequest;
+            message = invalidOpException.Message;
         }
         else
         {
-            problemDetails.Title = "An unexpected error occurred.";
-            problemDetails.Status = StatusCodes.Status500InternalServerError;
-            problemDetails.Detail = exception.Message; // In production, consider hiding stack details
+            message = exception.Message; // Consider hiding this in production
         }
 
-        httpContext.Response.StatusCode = problemDetails.Status.Value;
-        httpContext.Response.ContentType = "application/problem+json";
+        var response = InterviewPlatform.Application.DTOs.ApiResponse<object>.Fail(message, statusCode);
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.ContentType = "application/json";
+
+        await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
         
         return true;
     }

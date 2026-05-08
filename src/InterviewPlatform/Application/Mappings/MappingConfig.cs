@@ -17,8 +17,11 @@ public static class MappingConfig
         config.Scan(Assembly.GetExecutingAssembly());
 
         config.NewConfig<Course, CourseDto>();
-        config.NewConfig<CreateCourseDto, Course>();
-        config.NewConfig<UpdateCourseDto, Course>();
+        config.NewConfig<CreateCourseDto, Course>()
+              .Ignore(dest => dest.Questions);
+
+        config.NewConfig<UpdateCourseDto, Course>()
+              .Ignore(dest => dest.Questions);
         
         config.NewConfig<RegisterDto, User>()
               .Map(dest => dest.PasswordHash, src => src.Password);

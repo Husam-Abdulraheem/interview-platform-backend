@@ -62,20 +62,22 @@ public class AuthService : IAuthService
         var existingUsers = await _unitOfWork.Users.FindAsync(u => u.Email == request.Email);
         if (existingUsers.Any()) return false;
 
-        var user = request.Adapt<User>();
-        user.Id = Guid.NewGuid();
-        user.PasswordHash = PasswordHasher.Hash(request.Password);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = request.Email,
+            FullName = request.FullName,
+            PasswordHash = PasswordHasher.Hash(request.Password),
+            CreatedAt = DateTime.UtcNow
+        };
 
-        // Only allow registering as Trainee or requesting Creator role.
         if (request.Role == InterviewPlatform.Core.Enums.Role.Creator)
         {
-            user.Role = InterviewPlatform.Core.Enums.Role.Trainee; // default until approved
-            user.RequestedRole = InterviewPlatform.Core.Enums.Role.Creator;
-            user.IsApproved = false;
+            user.Role = InterviewPlatform.Core.Enums.Role.Creator; 
+            user.IsApproved = true;
         }
         else
         {
-            // Default to Trainee for any other value (including Admin if sent)
             user.Role = InterviewPlatform.Core.Enums.Role.Trainee;
             user.IsApproved = true;
         }

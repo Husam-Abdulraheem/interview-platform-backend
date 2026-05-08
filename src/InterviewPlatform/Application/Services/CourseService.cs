@@ -39,20 +39,28 @@ public class CourseService : ICourseService
 
     public async Task<CourseDto> CreateCourseAsync(CreateCourseDto dto)
     {
+        // 1. Map basic properties, but ignore Questions to handle them manually
         var course = dto.Adapt<Course>();
+        
         course.Id = Guid.NewGuid();
         course.CreatedAt = DateTime.UtcNow;
-        course.CreatorId = _currentUserContext.UserId; // Automatically assign the Creator
+        course.CreatorId = _currentUserContext.UserId; // Always use the ID from the token for security
 
+        // 2. Clear any accidental mapping of questions and rebuild them correctly
+        course.Questions = new List<Question>();
+        
         if (dto.Questions != null && dto.Questions.Any())
         {
-            course.Questions = dto.Questions.Select((q, index) => new Question
+            foreach (var (content, index) in dto.Questions.Select((v, i) => (v, i)))
             {
-                Id = Guid.NewGuid(),
-                Content = q,
-                OrderIndex = index,
-                CourseId = course.Id
-            }).ToList();
+                course.Questions.Add(new Question
+                {
+                    Id = Guid.NewGuid(),
+                    Content = content,
+                    OrderIndex = index,
+                    CourseId = course.Id
+                });
+            }
         }
 
         await _unitOfWork.Courses.AddAsync(course);
@@ -77,23 +85,8 @@ public class CourseService : ICourseService
         if (dto.YouTubeVideoUrl != null) course.YouTubeVideoUrl = dto.YouTubeVideoUrl;
         if (dto.ContentMaterial != null) course.ContentMaterial = dto.ContentMaterial;
 
-        if (dto.Questions != null)
-        {
-            // First, remove old questions and commit
-            var existingQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == id);
-            _unitOfWork.Questions.RemoveRange(existingQuestions);
-            await _unitOfWork.CompleteAsync();
-
-            // Then, add new questions
-            var newQuestions = dto.Questions.Select((q, index) => new Question
-            {
-                Id = Guid.NewGuid(),
-                Content = q,
-                OrderIndex = index,
-                CourseId = id
-            }).ToList();
-            await _unitOfWork.Questions.AddRangeAsync(newQuestions);
-        }
+        // Note: Questions are now managed via dedicated endpoints to avoid accidental deletion
+        // and to allow updating individual questions without re-sending the whole list.
         
         _unitOfWork.Courses.Update(course);
         await _unitOfWork.CompleteAsync();
@@ -114,6 +107,68 @@ public class CourseService : ICourseService
     public async Task<IEnumerable<CourseDto>> GetMyCoursesAsync()
     {
         var courses = await _unitOfWork.Courses.FindAsync(c => c.CreatorId == _currentUserContext.UserId);
-        return courses.Adapt<IEnumerable<CourseDto>>();
+        var courseDtos = courses.Adapt<List<CourseDto>>();
+
+        // Fetch and attach questions for each course
+        foreach (var dto in courseDtos)
+        {
+            var questions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == dto.Id);
+            dto.Questions = questions.Adapt<List<QuestionDto>>();
+        }
+
+        return courseDtos;
+    }
+
+    public async Task AddQuestionsToCourseAsync(Guid courseId, List<string> questionContents)
+    {
+        var course = await _unitOfWork.Courses.GetByIdAsync(courseId);
+        if (course == null) throw new NotFoundException($"Course with id {courseId} not found");
+
+        if (!_currentUserContext.IsAdmin && course.CreatorId != _currentUserContext.UserId)
+            throw new ForbiddenException("You do not have permission to add questions to this course.");
+
+        // Get current max index to append properly
+        var existingQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == courseId);
+        int startIndex = existingQuestions.Any() ? existingQuestions.Max(q => q.OrderIndex) + 1 : 0;
+
+        var newQuestions = questionContents.Select((content, index) => new Question
+        {
+            Id = Guid.NewGuid(),
+            Content = content,
+            OrderIndex = startIndex + index,
+            CourseId = courseId // Ensure the course ID is explicitly set
+        }).ToList();
+
+        await _unitOfWork.Questions.AddRangeAsync(newQuestions);
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task UpdateQuestionAsync(Guid questionId, UpdateQuestionDto dto)
+    {
+        var question = await _unitOfWork.Questions.GetByIdAsync(questionId);
+        if (question == null) throw new NotFoundException($"Question with id {questionId} not found");
+
+        var course = await _unitOfWork.Courses.GetByIdAsync((Guid)question.CourseId);
+        if (course != null && !_currentUserContext.IsAdmin && course.CreatorId != _currentUserContext.UserId)
+            throw new ForbiddenException("You do not have permission to update this question.");
+
+        question.Content = dto.Content;
+        question.OrderIndex = dto.OrderIndex;
+
+        _unitOfWork.Questions.Update(question);
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task DeleteQuestionAsync(Guid questionId)
+    {
+        var question = await _unitOfWork.Questions.GetByIdAsync(questionId);
+        if (question == null) throw new NotFoundException($"Question with id {questionId} not found");
+
+        var course = await _unitOfWork.Courses.GetByIdAsync((Guid)question.CourseId);
+        if (course != null && !_currentUserContext.IsAdmin && course.CreatorId != _currentUserContext.UserId)
+            throw new ForbiddenException("You do not have permission to delete this question.");
+
+        _unitOfWork.Questions.Remove(question);
+        await _unitOfWork.CompleteAsync();
     }
 }

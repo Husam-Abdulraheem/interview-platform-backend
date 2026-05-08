@@ -28,7 +28,24 @@ public class GeminiEvaluationService : IAiEvaluationService
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Gemini API Key is missing.");
 
-        var prompt = $"Evaluate the answer for the question. Respond ONLY with a JSON object. Ensure the format adheres to:\n{{\n  \"score\": 0 to 100 integer,\n  \"generalFeedback\": \"overall evaluation summary\",\n  \"strengths\": [\"array of strings describing strengths\"],\n  \"weaknesses\": [\"array of strings describing weaknesses\"],\n  \"suggestions\": [\"array of strings with actionable suggestions for improvement\"]\n}}\n\nProvide 3-5 specific points for each array.\n\nQuestion: {questionContent}\n\nAnswer: {traineeAnswer}";
+        var prompt = $@"
+Evaluate the following interview answer. 
+You MUST respond with a VALID JSON object ONLY. 
+Do not include any markdown formatting like ```json. 
+Do not include any text before or after the JSON.
+
+JSON Structure:
+{{
+  ""score"": (integer between 0 and 100),
+  ""generalFeedback"": ""a concise summary of the evaluation"",
+  ""strengths"": [""point 1"", ""point 2""],
+  ""weaknesses"": [""point 1"", ""point 2""],
+  ""suggestions"": [""point 1"", ""point 2""]
+}}
+
+Question: {questionContent}
+Answer: {traineeAnswer}
+";
 
         try
         {
@@ -37,7 +54,7 @@ public class GeminiEvaluationService : IAiEvaluationService
             var config = new GenerateContentConfig
             {
                 ResponseMimeType = "application/json",
-                Temperature = 0.7f,
+                Temperature = 0.4f, // Lower temperature for more consistent JSON
                 MaxOutputTokens = 1000
             };
 

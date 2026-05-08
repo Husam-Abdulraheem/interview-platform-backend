@@ -19,8 +19,8 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto request)
     {
         var token = await _authService.LoginAsync(request);
-        if (token == null) return Unauthorized("Invalid credentials.");
-        return Ok(token);
+        if (token == null) return Unauthorized(ApiResponse<object>.Fail("Invalid email or password.", 401));
+        return Ok(ApiResponse<TokenDto>.SuccessResult(token, "Login successful"));
     }
 
     [HttpPost("register")]
@@ -28,10 +28,10 @@ public class AuthController : ControllerBase
     {
         // Prevent clients from registering as Admin directly
         if (request.Role == InterviewPlatform.Core.Enums.Role.Admin)
-            return BadRequest("Cannot register as admin. Admin accounts must be created by an existing admin.");
+            return BadRequest(ApiResponse<object>.Fail("Cannot register as admin."));
 
         var success = await _authService.RegisterAsync(request);
-        if (!success) return BadRequest("Email is already in use.");
-        return Ok("Registration successful.");
+        if (!success) return BadRequest(ApiResponse<object>.Fail("Email is already in use."));
+        return Ok(ApiResponse<object>.SuccessResult(null, "Registration successful. Please wait for approval if you requested a Creator role."));
     }
 }

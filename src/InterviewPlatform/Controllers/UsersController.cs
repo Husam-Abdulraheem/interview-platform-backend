@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using InterviewPlatform.Application.DTOs;
 using InterviewPlatform.Application.Interfaces;
 using InterviewPlatform.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -32,7 +33,7 @@ public class UsersController : ControllerBase
             return Unauthorized("User identity not found in token.");
 
         var profile = await _userService.GetUserProfileAsync(userId);
-        return Ok(profile);
+        return Ok(ApiResponse<UserProfileDto>.SuccessResult(profile));
     }
 
     // --- Admin Only Features ---
@@ -42,7 +43,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
-        return Ok(users);
+        return Ok(ApiResponse<IEnumerable<UserProfileDto>>.SuccessResult(users));
     }
 
     [HttpGet("requests")]
@@ -50,7 +51,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetPendingRoleRequests()
     {
         var pending = await _userService.GetPendingRoleRequestsAsync();
-        return Ok(pending);
+        return Ok(ApiResponse<IEnumerable<UserProfileDto>>.SuccessResult(pending));
     }
 
     [HttpPost("{id:guid}/approve")]
@@ -58,7 +59,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> ApproveRoleRequest(Guid id)
     {
         await _userService.ApproveUserRoleRequestAsync(id);
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResult(null, "Role request approved successfully"));
     }
 
     [HttpPut("{id:guid}/role")]
@@ -66,10 +67,10 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> UpdateRole(Guid id, [FromQuery] Role newRole)
     {
         if (!Enum.IsDefined(typeof(Role), newRole))
-            return BadRequest("Invalid Role specified.");
+            return BadRequest(ApiResponse<object>.Fail("Invalid Role specified."));
 
         await _userService.UpdateUserRoleAsync(id, newRole);
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResult(null, "User role updated successfully"));
     }
 
     [HttpDelete("{id:guid}")]
@@ -77,6 +78,6 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         await _userService.DeleteUserAsync(id);
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResult(null, "User deleted successfully"));
     }
 }

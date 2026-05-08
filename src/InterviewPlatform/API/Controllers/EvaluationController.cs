@@ -28,11 +28,11 @@ public class EvaluationController : ControllerBase
             }
 
             var result = await _evaluationService.EvaluateDirectAsync(request);
-            return Ok(result);
+            return Ok(ApiResponse<AiEvaluationResultDto>.SuccessResult(result, "Evaluation completed successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(new { error = ex.Message });
+            return BadRequest(ApiResponse<object>.Fail(ex.Message));
         }
     }
 }

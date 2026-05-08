@@ -20,10 +20,12 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         // Configure Course-Question relationship
+        // Use Cascade so that deleting a Course automatically removes its Questions.
+        // Restrict was causing DELETE endpoints to fail silently when a course had questions.
         modelBuilder.Entity<Question>()
             .HasOne(q => q.Course)
             .WithMany(c => c.Questions)
             .HasForeignKey(q => q.CourseId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -14,7 +14,7 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(e => e.Description).HasMaxLength(2000);
         builder.Property(e => e.Specialty).HasMaxLength(255);
         builder.Property(e => e.YouTubeVideoUrl).HasMaxLength(1000);
-        builder.Property(e => e.ContentMaterial).HasMaxLength(4000); // Could be text or URL
+        builder.Property(e => e.ContentMaterial).HasColumnType("text"); // Unlimited — avoids silent truncation on long content/URLs
         builder.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
     }
 }

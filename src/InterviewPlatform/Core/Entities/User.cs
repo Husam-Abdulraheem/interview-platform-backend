@@ -12,6 +12,7 @@ public class User
     // Role upgrade request workflow
     public Role? RequestedRole { get; set; }
     public bool IsApproved { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
 }

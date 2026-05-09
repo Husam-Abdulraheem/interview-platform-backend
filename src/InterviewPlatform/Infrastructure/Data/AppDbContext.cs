@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Course> Courses { get; set; } = null!;
     public DbSet<Question> Questions { get; set; } = null!;
+    public DbSet<CourseAttempt> CourseAttempts { get; set; } = null!;
+    public DbSet<QuestionAttempt> QuestionAttempts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

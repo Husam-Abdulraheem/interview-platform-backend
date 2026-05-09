@@ -7,6 +7,8 @@ public interface IUnitOfWork : IDisposable
     IRepository<User> Users { get; }
     IRepository<Course> Courses { get; }
     IRepository<Question> Questions { get; }
+    IRepository<CourseAttempt> CourseAttempts { get; }
+    IRepository<QuestionAttempt> QuestionAttempts { get; }
 
     Task<int> CompleteAsync();
 }

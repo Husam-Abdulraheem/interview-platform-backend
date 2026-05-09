@@ -20,7 +20,23 @@ public class CourseService : ICourseService
     public async Task<IEnumerable<CourseDto>> GetAllCoursesAsync()
     {
         var courses = await _unitOfWork.Courses.GetAllAsync();
-        return courses.Adapt<IEnumerable<CourseDto>>();
+        var courseDtos = courses.Adapt<List<CourseDto>>();
+
+        var courseIds = courseDtos.Select(d => d.Id).ToList();
+        var allQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId != null && courseIds.Contains(q.CourseId.Value));
+        
+        var questionsByCourse = allQuestions.GroupBy(q => q.CourseId)
+                                            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var dto in courseDtos)
+        {
+            if (questionsByCourse.TryGetValue(dto.Id, out var questions))
+            {
+                dto.Questions = questions.Adapt<List<QuestionDto>>();
+            }
+        }
+
+        return courseDtos;
     }
 
     public async Task<CourseDto?> GetCourseByIdAsync(Guid id)
@@ -109,11 +125,18 @@ public class CourseService : ICourseService
         var courses = await _unitOfWork.Courses.FindAsync(c => c.CreatorId == _currentUserContext.UserId);
         var courseDtos = courses.Adapt<List<CourseDto>>();
 
-        // Fetch and attach questions for each course
+        var courseIds = courseDtos.Select(d => d.Id).ToList();
+        var allQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId != null && courseIds.Contains(q.CourseId.Value));
+
+        var questionsByCourse = allQuestions.GroupBy(q => q.CourseId)
+                                            .ToDictionary(g => g.Key, g => g.ToList());
+
         foreach (var dto in courseDtos)
         {
-            var questions = await _unitOfWork.Questions.FindAsync(q => q.CourseId == dto.Id);
-            dto.Questions = questions.Adapt<List<QuestionDto>>();
+            if (questionsByCourse.TryGetValue(dto.Id, out var questions))
+            {
+                dto.Questions = questions.Adapt<List<QuestionDto>>();
+            }
         }
 
         return courseDtos;

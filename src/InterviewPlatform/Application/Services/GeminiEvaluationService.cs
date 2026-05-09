@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using InterviewPlatform.Application.DTOs;
 using InterviewPlatform.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -28,20 +29,24 @@ public class GeminiEvaluationService : IAiEvaluationService
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Gemini API Key is missing.");
 
+        // 1. Define the Response Schema to enforce structured JSON output
+        var responseSchema = new 
+        {
+            type = "object",
+            properties = new 
+            {
+                score = new { type = "number" },
+                generalFeedback = new { type = "string" },
+                strengths = new { type = "array", items = new { type = "string" } },
+                weaknesses = new { type = "array", items = new { type = "string" } },
+                suggestions = new { type = "array", items = new { type = "string" } }
+            },
+            required = new[] { "score", "generalFeedback", "strengths", "weaknesses", "suggestions" }
+        };
+
         var prompt = $@"
 Evaluate the following interview answer. 
-You MUST respond with a VALID JSON object ONLY. 
-Do not include any markdown formatting like ```json. 
-Do not include any text before or after the JSON.
-
-JSON Structure:
-{{
-  ""score"": (integer between 0 and 100),
-  ""generalFeedback"": ""a concise summary of the evaluation"",
-  ""strengths"": [""point 1"", ""point 2""],
-  ""weaknesses"": [""point 1"", ""point 2""],
-  ""suggestions"": [""point 1"", ""point 2""]
-}}
+Provide a score from 0-100, a summary of the performance, specific strengths, weaknesses, and suggestions for improvement.
 
 Question: {questionContent}
 Answer: {traineeAnswer}
@@ -54,7 +59,8 @@ Answer: {traineeAnswer}
             var config = new GenerateContentConfig
             {
                 ResponseMimeType = "application/json",
-                Temperature = 0.4f, // Lower temperature for more consistent JSON
+                ResponseSchema = responseSchema,
+                Temperature = 0.2f, // Lower temperature for more consistent output
                 MaxOutputTokens = 1000
             };
 
@@ -66,53 +72,20 @@ Answer: {traineeAnswer}
 
             var textObj = response.Text;
 
-            if (!string.IsNullOrEmpty(textObj))
-            {
-                // Remove markdown code blocks if present
-                textObj = textObj.Replace("```json", "").Replace("```", "").Trim();
+            if (string.IsNullOrEmpty(textObj))
+                throw new InvalidOperationException("AI returned an empty response.");
 
-                // Robustly extract the JSON object in case of extra text
-                int start = textObj.IndexOf('{');
-                int end = textObj.LastIndexOf('}');
-                if (start != -1 && end != -1 && end > start)
-                {
-                    textObj = textObj.Substring(start, end - start + 1);
-                }
-
-                // Ensure your JSON options are flexible enough to handle AI output
-                var jsonOptions = new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                };
-
-                // 3. Parse the result directly into your DTO
-                try
-                {
-                    var evaluationResult = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, jsonOptions);
-                    
-                    // Proceed to map 'evaluationResult' to your InterviewAttempt/AnswerAttempt entities
-                    if (evaluationResult != null)
-                        return evaluationResult;
-                }
-                catch (JsonException ex)
-                {
-                    // Log the actual text returned by Gemini to see why it failed parsing
-                    Console.WriteLine($"JSON Parsing Error: {ex.Message}");
-                    Console.WriteLine($"AI Response Text: {response.Text}");
-                    
-                    // Throw a proper architectural exception, not a raw crash
-                    throw new InvalidOperationException("Failed to parse AI evaluation data. Check the AI prompt or output format.", ex);
-                }
-            }
-
-            return new AiEvaluationResultDto
-            {
-                Score = 0,
-                GeneralFeedback = "Failed to parse AI response.",
-                Strengths = new List<string>(),
-                Weaknesses = new List<string> { "Failed to parse AI response." },
-                Suggestions = new List<string>()
+            // 2. Use robust JSON options to handle variations in AI output
+            var jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString
             };
+
+            var evaluationResult = JsonSerializer.Deserialize<AiEvaluationResultDto>(textObj, jsonOptions);
+            
+            return evaluationResult ?? throw new InvalidOperationException("Failed to deserialize AI evaluation data.");
         }
         catch (Exception ex)
         {
@@ -122,7 +95,7 @@ Answer: {traineeAnswer}
                 Score = 0,
                 GeneralFeedback = $"AI evaluation failed: {ex.Message}",
                 Strengths = new List<string>(),
-                Weaknesses = new List<string> { $"AI evaluation failed: {ex.Message}" },
+                Weaknesses = new List<string> { "The system encountered an error while evaluating the answer. Please try again." },
                 Suggestions = new List<string>()
             };
         }

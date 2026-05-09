@@ -26,7 +26,7 @@ public class CourseService : ICourseService
         var allQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId != null && courseIds.Contains(q.CourseId.Value));
         
         var questionsByCourse = allQuestions.GroupBy(q => q.CourseId)
-                                            .ToDictionary(g => g.Key, g => g.ToList());
+                                            .ToDictionary(g => g.Key!.Value, g => g.ToList());
 
         foreach (var dto in courseDtos)
         {
@@ -129,7 +129,7 @@ public class CourseService : ICourseService
         var allQuestions = await _unitOfWork.Questions.FindAsync(q => q.CourseId != null && courseIds.Contains(q.CourseId.Value));
 
         var questionsByCourse = allQuestions.GroupBy(q => q.CourseId)
-                                            .ToDictionary(g => g.Key, g => g.ToList());
+                                            .ToDictionary(g => g.Key!.Value, g => g.ToList());
 
         foreach (var dto in courseDtos)
         {

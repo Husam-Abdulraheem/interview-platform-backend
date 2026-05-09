@@ -30,18 +30,18 @@ public class GeminiEvaluationService : IAiEvaluationService
             throw new InvalidOperationException("Gemini API Key is missing.");
 
         // 1. Define the Response Schema to enforce structured JSON output
-        var responseSchema = new 
+        var responseSchema = new Schema
         {
-            type = "object",
-            properties = new 
+            Type = Google.GenAI.Types.Type.Object,
+            Properties = new Dictionary<string, Schema>
             {
-                score = new { type = "number" },
-                generalFeedback = new { type = "string" },
-                strengths = new { type = "array", items = new { type = "string" } },
-                weaknesses = new { type = "array", items = new { type = "string" } },
-                suggestions = new { type = "array", items = new { type = "string" } }
+                { "score", new Schema { Type = Google.GenAI.Types.Type.Number } },
+                { "generalFeedback", new Schema { Type = Google.GenAI.Types.Type.String } },
+                { "strengths", new Schema { Type = Google.GenAI.Types.Type.Array, Items = new Schema { Type = Google.GenAI.Types.Type.String } } },
+                { "weaknesses", new Schema { Type = Google.GenAI.Types.Type.Array, Items = new Schema { Type = Google.GenAI.Types.Type.String } } },
+                { "suggestions", new Schema { Type = Google.GenAI.Types.Type.Array, Items = new Schema { Type = Google.GenAI.Types.Type.String } } }
             },
-            required = new[] { "score", "generalFeedback", "strengths", "weaknesses", "suggestions" }
+            Required = { "score", "generalFeedback", "strengths", "weaknesses", "suggestions" }
         };
 
         var prompt = $@"

@@ -41,7 +41,7 @@ public class GeminiEvaluationService : IAiEvaluationService
                 { "weaknesses", new Schema { Type = Google.GenAI.Types.Type.Array, Items = new Schema { Type = Google.GenAI.Types.Type.String } } },
                 { "suggestions", new Schema { Type = Google.GenAI.Types.Type.Array, Items = new Schema { Type = Google.GenAI.Types.Type.String } } }
             },
-            Required = { "score", "generalFeedback", "strengths", "weaknesses", "suggestions" }
+            Required = new List<string> { "score", "generalFeedback", "strengths", "weaknesses", "suggestions" }
         };
 
         var prompt = $@"

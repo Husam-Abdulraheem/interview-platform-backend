@@ -61,7 +61,7 @@ Answer: {traineeAnswer}
                 ResponseMimeType = "application/json",
                 ResponseSchema = responseSchema,
                 Temperature = 0.2f, // Lower temperature for more consistent output
-                MaxOutputTokens = 1000
+                MaxOutputTokens = 8192
             };
 
             var response = await client.Models.GenerateContentAsync(
@@ -74,6 +74,22 @@ Answer: {traineeAnswer}
 
             if (string.IsNullOrEmpty(textObj))
                 throw new InvalidOperationException("AI returned an empty response.");
+
+            // Clean up potential markdown formatting
+            textObj = textObj.Trim();
+            if (textObj.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+            {
+                textObj = textObj.Substring(7);
+            }
+            if (textObj.StartsWith("```", StringComparison.OrdinalIgnoreCase))
+            {
+                textObj = textObj.Substring(3);
+            }
+            if (textObj.EndsWith("```"))
+            {
+                textObj = textObj.Substring(0, textObj.Length - 3);
+            }
+            textObj = textObj.Trim();
 
             // 2. Use robust JSON options to handle variations in AI output
             var jsonOptions = new JsonSerializerOptions 

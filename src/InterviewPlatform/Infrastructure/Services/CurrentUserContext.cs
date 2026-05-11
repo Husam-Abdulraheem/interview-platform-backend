@@ -30,7 +30,8 @@ public class CurrentUserContext : ICurrentUserContext
         }
     }
 
-    public bool IsAdmin => Role == Role.Admin;
+    public bool IsSuperAdmin => Role == Role.SuperAdmin;
+    public bool IsAdmin => Role == Role.Admin || Role == Role.SuperAdmin;
     public bool IsCreator => Role == Role.Creator;
     
     public bool IsApproved 

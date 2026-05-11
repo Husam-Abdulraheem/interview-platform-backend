@@ -39,7 +39,7 @@ public class UsersController : ControllerBase
     // --- Admin Only Features ---
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
@@ -47,7 +47,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("requests")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> GetPendingRoleRequests()
     {
         var pending = await _userService.GetPendingRoleRequestsAsync();
@@ -55,7 +55,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/approve")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> ApproveRoleRequest(Guid id)
     {
         await _userService.ApproveUserRoleRequestAsync(id);
@@ -63,7 +63,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}/role")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> UpdateRole(Guid id, [FromQuery] Role newRole)
     {
         if (!Enum.IsDefined(typeof(Role), newRole))
@@ -74,7 +74,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         await _userService.DeleteUserAsync(id);

@@ -6,6 +6,7 @@ public interface ICurrentUserContext
 {
     Guid UserId { get; }
     Role Role { get; }
+    bool IsSuperAdmin { get; }
     bool IsAdmin { get; }
     bool IsCreator { get; }
     bool IsApproved { get; }

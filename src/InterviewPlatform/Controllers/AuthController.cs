@@ -26,9 +26,9 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto request)
     {
-        // Prevent clients from registering as Admin directly
-        if (request.Role == InterviewPlatform.Core.Enums.Role.Admin)
-            return BadRequest(ApiResponse<object>.Fail("Cannot register as admin."));
+        // Prevent clients from registering as Admin or SuperAdmin directly
+        if (request.Role == InterviewPlatform.Core.Enums.Role.Admin || request.Role == InterviewPlatform.Core.Enums.Role.SuperAdmin)
+            return BadRequest(ApiResponse<object>.Fail("Cannot register as an administrator."));
 
         var success = await _authService.RegisterAsync(request);
         if (!success) return BadRequest(ApiResponse<object>.Fail("Email is already in use."));

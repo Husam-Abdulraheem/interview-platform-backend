@@ -43,7 +43,7 @@ public class CoursesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto dto)
     {
         var course = await _courseService.CreateCourseAsync(dto);
@@ -51,7 +51,7 @@ public class CoursesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCourseDto dto)
     {
         await _courseService.UpdateCourseAsync(id, dto);
@@ -59,7 +59,7 @@ public class CoursesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _courseService.DeleteCourseAsync(id);
@@ -69,7 +69,7 @@ public class CoursesController : ControllerBase
     // --- Question Management Endpoints ---
 
     [HttpPost("{id}/questions")]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> AddQuestions(Guid id, [FromBody] List<string> questions)
     {
         await _courseService.AddQuestionsToCourseAsync(id, questions);
@@ -77,7 +77,7 @@ public class CoursesController : ControllerBase
     }
 
     [HttpPut("questions/{questionId}")]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> UpdateQuestion(Guid questionId, [FromBody] UpdateQuestionDto dto)
     {
         await _courseService.UpdateQuestionAsync(questionId, dto);
@@ -85,7 +85,7 @@ public class CoursesController : ControllerBase
     }
 
     [HttpDelete("questions/{questionId}")]
-    [Authorize(Roles = "Creator,Admin")]
+    [Authorize(Roles = "Creator,Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteQuestion(Guid questionId)
     {
         await _courseService.DeleteQuestionAsync(questionId);

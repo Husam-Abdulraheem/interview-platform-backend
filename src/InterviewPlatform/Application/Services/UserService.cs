@@ -9,10 +9,12 @@ namespace InterviewPlatform.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserContext _currentUserContext;
 
-    public UserService(IUnitOfWork unitOfWork)
+    public UserService(IUnitOfWork unitOfWork, ICurrentUserContext currentUserContext)
     {
         _unitOfWork = unitOfWork;
+        _currentUserContext = currentUserContext;
     }
 
     public async Task<UserProfileDto> GetUserProfileAsync(Guid userId)
@@ -57,6 +59,18 @@ public class UserService : IUserService
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user == null) throw new NotFoundException($"User with ID {userId} not found.");
 
+        // Protection: Only SuperAdmin can modify SuperAdmin or Admin roles.
+        if ((user.Role == Core.Enums.Role.Admin || user.Role == Core.Enums.Role.SuperAdmin) && !_currentUserContext.IsSuperAdmin)
+            throw new ForbiddenException("Only a SuperAdmin can modify the role of an Admin or SuperAdmin.");
+
+        // Protection: Prevent demoting the last Admin/SuperAdmin
+        if ((user.Role == Core.Enums.Role.Admin || user.Role == Core.Enums.Role.SuperAdmin) && newRole != Core.Enums.Role.Admin && newRole != Core.Enums.Role.SuperAdmin)
+        {
+            var adminCount = (await _unitOfWork.Users.FindAsync(u => u.Role == Core.Enums.Role.Admin || u.Role == Core.Enums.Role.SuperAdmin)).Count();
+            if (adminCount <= 1)
+                throw new InvalidOperationException("Cannot demote the last administrator in the system.");
+        }
+
         user.Role = newRole;
         _unitOfWork.Users.Update(user);
         await _unitOfWork.CompleteAsync();
@@ -66,6 +80,18 @@ public class UserService : IUserService
     {
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user == null) throw new NotFoundException($"User with ID {userId} not found.");
+
+        // Protection: Only SuperAdmin can delete an Admin or SuperAdmin
+        if ((user.Role == Core.Enums.Role.Admin || user.Role == Core.Enums.Role.SuperAdmin) && !_currentUserContext.IsSuperAdmin)
+            throw new ForbiddenException("Only a SuperAdmin can delete an Admin or SuperAdmin.");
+
+        // Protection: Prevent deleting the last Admin/SuperAdmin
+        if (user.Role == Core.Enums.Role.Admin || user.Role == Core.Enums.Role.SuperAdmin)
+        {
+            var adminCount = (await _unitOfWork.Users.FindAsync(u => u.Role == Core.Enums.Role.Admin || u.Role == Core.Enums.Role.SuperAdmin)).Count();
+            if (adminCount <= 1)
+                throw new InvalidOperationException("Cannot delete the last administrator in the system.");
+        }
 
         _unitOfWork.Users.Remove(user);
         await _unitOfWork.CompleteAsync();

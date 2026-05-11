@@ -15,4 +15,11 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
+    
+    // Creator specific properties
+    public string? Bio { get; set; }
+    public string? PortfolioUrl { get; set; }
+    public string? YouTubeUrl { get; set; }
+    public string? LinkedInUrl { get; set; }
+    public int? ExperienceYears { get; set; }
 }

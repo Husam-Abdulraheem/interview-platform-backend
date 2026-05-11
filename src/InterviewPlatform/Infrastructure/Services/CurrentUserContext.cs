@@ -32,4 +32,18 @@ public class CurrentUserContext : ICurrentUserContext
 
     public bool IsAdmin => Role == Role.Admin;
     public bool IsCreator => Role == Role.Creator;
+    
+    public bool IsApproved 
+    {
+        get
+        {
+            var isApprovedStr = _httpContextAccessor.HttpContext?.User?.FindFirstValue("isApproved");
+            if (bool.TryParse(isApprovedStr, out var isApproved))
+                return isApproved;
+            
+            // Default to true for backward compatibility or if claim is missing, 
+            // though ideally we might want to check the DB if it's missing, but token should have it.
+            return true;
+        }
+    }
 }

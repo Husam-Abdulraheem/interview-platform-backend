@@ -55,6 +55,9 @@ public class CourseService : ICourseService
 
     public async Task<CourseDto> CreateCourseAsync(CreateCourseDto dto)
     {
+        if (!_currentUserContext.IsApproved)
+            throw new ForbiddenException("Your account must be approved by an administrator before you can create courses.");
+
         // 1. Map basic properties, but ignore Questions to handle them manually
         var course = dto.Adapt<Course>();
         

@@ -41,7 +41,8 @@ public class AuthService : IAuthService
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("isApproved", user.IsApproved.ToString())
             }),
             Expires = DateTime.UtcNow.AddHours(2),
             Issuer = _configuration["Jwt:Issuer"],
@@ -74,7 +75,14 @@ public class AuthService : IAuthService
         if (request.Role == InterviewPlatform.Core.Enums.Role.Creator)
         {
             user.Role = InterviewPlatform.Core.Enums.Role.Creator; 
-            user.IsApproved = true;
+            user.IsApproved = false; // Requires admin approval
+            
+            // Map creator specific fields
+            user.Bio = request.Bio;
+            user.PortfolioUrl = request.PortfolioUrl;
+            user.YouTubeUrl = request.YouTubeUrl;
+            user.LinkedInUrl = request.LinkedInUrl;
+            user.ExperienceYears = request.ExperienceYears;
         }
         else
         {

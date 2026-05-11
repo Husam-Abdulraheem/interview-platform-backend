@@ -46,7 +46,9 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserProfileDto>> GetPendingRoleRequestsAsync()
     {
-        var users = await _unitOfWork.Users.FindAsync(u => u.RequestedRole != null && !u.IsApproved);
+        var users = await _unitOfWork.Users.FindAsync(u => 
+            (u.RequestedRole != null && !u.IsApproved) || 
+            (u.Role == Core.Enums.Role.Creator && !u.IsApproved));
         return users.Adapt<IEnumerable<UserProfileDto>>();
     }
 
@@ -73,10 +75,16 @@ public class UserService : IUserService
     {
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user == null) throw new NotFoundException($"User with ID {userId} not found.");
-        if (user.RequestedRole == null) throw new InvalidOperationException("User has not requested a role change.");
+        
+        if (user.RequestedRole == null && user.Role != Core.Enums.Role.Creator) 
+            throw new InvalidOperationException("User has not requested a role change and is not a pending creator.");
 
-        user.Role = user.RequestedRole.Value;
-        user.RequestedRole = null;
+        if (user.RequestedRole != null)
+        {
+            user.Role = user.RequestedRole.Value;
+            user.RequestedRole = null;
+        }
+        
         user.IsApproved = true;
 
         _unitOfWork.Users.Update(user);

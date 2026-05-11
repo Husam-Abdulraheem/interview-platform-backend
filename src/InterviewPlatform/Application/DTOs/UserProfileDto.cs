@@ -12,4 +12,12 @@ public class UserProfileDto
     // Additional Optional Stats
     public int CreatedCoursesCount { get; set; }
     public int InterviewAttemptsCount { get; set; }
+    
+    // Creator fields
+    public bool IsApproved { get; set; }
+    public string? Bio { get; set; }
+    public string? PortfolioUrl { get; set; }
+    public string? YouTubeUrl { get; set; }
+    public string? LinkedInUrl { get; set; }
+    public int? ExperienceYears { get; set; }
 }

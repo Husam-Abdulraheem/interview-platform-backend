@@ -8,4 +8,5 @@ public interface ICurrentUserContext
     Role Role { get; }
     bool IsAdmin { get; }
     bool IsCreator { get; }
+    bool IsApproved { get; }
 }

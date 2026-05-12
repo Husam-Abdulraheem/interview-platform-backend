@@ -28,6 +28,6 @@ public class QuestionAttemptConfiguration : IEntityTypeConfiguration<QuestionAtt
         builder.HasOne(qa => qa.Question)
             .WithMany()
             .HasForeignKey(qa => qa.QuestionId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -25,6 +25,6 @@ public class CourseAttemptConfiguration : IEntityTypeConfiguration<CourseAttempt
         builder.HasOne(ca => ca.User)
             .WithMany()
             .HasForeignKey(ca => ca.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

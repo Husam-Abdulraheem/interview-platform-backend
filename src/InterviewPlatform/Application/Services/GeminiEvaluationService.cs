@@ -45,11 +45,11 @@ public class GeminiEvaluationService : IAiEvaluationService
         };
 
         var prompt = $@"
-Evaluate the following interview answer. 
-Provide a score from 0-100, a summary of the performance, specific strengths, weaknesses, and suggestions for improvement.
+Aşağıdaki mülakat cevabını değerlendir. 
+0-100 arası bir puan, performansın bir özeti, belirli güçlü yönler, zayıf yönler ve iyileştirme için öneriler sağla.
 
-Question: {questionContent}
-Answer: {traineeAnswer}
+Soru: {questionContent}
+Cevap: {traineeAnswer}
 ";
 
         try
@@ -111,7 +111,7 @@ Answer: {traineeAnswer}
                 Score = 0,
                 GeneralFeedback = $"AI evaluation failed: {ex.Message}",
                 Strengths = new List<string>(),
-                Weaknesses = new List<string> { "The system encountered an error while evaluating the answer. Please try again." },
+                Weaknesses = new List<string> { "Sistem cevabı değerlendirirken bir hatayla karşılaştı. Lütfen tekrar deneyin." },
                 Suggestions = new List<string>()
             };
         }
